@@ -37,7 +37,6 @@ class QuadraticConv2D(tf.keras.layers.Layer):
     self.kernel_regularizer = regularizers.get(kernel_regularizer)
     self.kernel_constraint = constraints.get(kernel_constraint)
 
-
   def build(self, input_shape):
     self.batch_size, _, _, self.in_channels = input_shape
 

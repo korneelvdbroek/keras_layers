@@ -77,6 +77,31 @@ class TestQuadraticConv2D(unittest.TestCase):
 
     self.assertGreaterEqual(1e-4, tf.reduce_max(tf.abs(layer_output - answer)), "Should be equal")
 
+  def test_quadratic(self):
+    """Test bias"""
+    out_channels = 1
+
+    # define layer
+    layer_object = layers.QuadraticConv2D(out_channels=out_channels,
+                                          kernel_size=(3, 3),
+                                          strides=(1, 1),
+                                          use_linear_and_bias=False)
+
+    layer_input = self.get_layer_input()
+    in_channels = layer_input.shape[-1]
+
+    # force a kernel into the layer
+    kernel_length = 3 * 3 * (3 * 3 + 1) // 2
+    kernel_data = [[[1 if (i == 30) else 0]] for i in range(kernel_length)]
+    kernel = tf.constant([[kernel_data]], dtype=tf.float32)
+    kernel = tf.tile(kernel, multiples=tf.constant([1, 1, 1, in_channels, out_channels], tf.int32))
+    layer_object.add_weight = MagicMock(return_value=kernel)
+
+    layer_output = layer_object(layer_input)
+
+    answer = layer_input**2
+    self.assertGreaterEqual(1e-4, tf.reduce_max(tf.abs(layer_output - answer)), "Should be zero")
+
 
 if __name__ == '__main__':
   unittest.main()
