@@ -16,11 +16,11 @@ class QuadraticConv2D(tf.keras.layers.Layer):
                strides=(1, 1),
                padding='same',
                use_linear_and_bias=True,
-               trainable=True,
-               name=None,
                kernel_initializer='glorot_uniform',
                kernel_regularizer=None,
                kernel_constraint=None,
+               trainable=True,
+               name=None,
                **kwargs):
     super(QuadraticConv2D, self).__init__(
         trainable=trainable,
@@ -39,14 +39,12 @@ class QuadraticConv2D(tf.keras.layers.Layer):
 
 
   def build(self, input_shape):
-    self.batch_size, self.in_height, self.in_width, self.in_channels = input_shape
+    self.batch_size, _, _, self.in_channels = input_shape
 
     # padding='SAME'
     self.out_shape = [self.batch_size] + [math.ceil(float(input_shape[i + 1]) / float(self.strides[i])) for i in range(2)] + [self.out_channels]
     self.pad_total = tuple(max((self.out_shape[i + 1] - 1) * self.strides[i] + self.kernel_size[i] - input_shape[i + 1], 0) for i in range(2))
     self.paddings = [[0, 0]] + [[self.pad_total[i] // 2, self.pad_total[i] - (self.pad_total[i] // 2)] for i in range(2)] + [[0, 0]]
-
-    self.linear_coeff = [tf.ones(input_shape, dtype=self.dtype)] if self.use_linear_and_bias else []
 
     kernel_length = (self.kernel_size[0] * self.kernel_size[1] * (self.kernel_size[0] * self.kernel_size[1] + 1)) // 2
     if self.use_linear_and_bias:
@@ -66,9 +64,15 @@ class QuadraticConv2D(tf.keras.layers.Layer):
   def call(self, inputs, **kwargs):
     input_pad = tf.pad(inputs, self.paddings)
 
-    offset_input = self.linear_coeff + [input_pad[:, (i // self.kernel_size[1]):(i // self.kernel_size[1]) + self.in_height,
-                                                     (i % self.kernel_size[1]):(i % self.kernel_size[1]) + self.in_width, :]
-                                        for i in range((self.pad_total[0] + 1) * (self.pad_total[1] + 1))]
+    linear_coeff = [tf.ones(shape=[self.batch_size,
+                                   input_pad.shape[1] - self.kernel_size[0] + 1,
+                                   input_pad.shape[2] - self.kernel_size[1] + 1,
+                                   self.in_channels], dtype=self.dtype)] if self.use_linear_and_bias else []
+
+    offset_input = linear_coeff + (
+      [input_pad[:, (i // self.kernel_size[1]):(i // self.kernel_size[1]) + input_pad.shape[1] - self.kernel_size[0] + 1,
+                    (i % self.kernel_size[1]):(i % self.kernel_size[1]) + input_pad.shape[2] - self.kernel_size[1] + 1, :]
+       for i in range(self.kernel_size[0] * self.kernel_size[1])])
 
     # see what elements need to be multiplied
     include_linear = 1 if self.use_linear_and_bias else 0

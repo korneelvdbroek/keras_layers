@@ -46,22 +46,23 @@ class TestQuadraticConv2D(unittest.TestCase):
   def test_conv2d(self):
     """Test if results are same as a normal Conv2D layer"""
     out_channels = 5
+    kernel_size = (3, 4)
+    strides = (2, 3)
 
     # define layer
-    qconv2d_layer_object = layers.QuadraticConv2D(out_channels=out_channels,
-                                                  kernel_size=(3, 3),
-                                                  strides=(1, 1),
+    qconv2d_layer_object = layers.QuadraticConv2D(out_channels,
+                                                  kernel_size,
+                                                  strides,
                                                   use_linear_and_bias=True)
     conv2d_layer_object = tf.keras.layers.Conv2D(out_channels,
-                                                 kernel_size=(3, 3),
-                                                 strides=(1, 1),
+                                                 kernel_size,
+                                                 strides,
                                                  use_bias=False,
                                                  padding='same')
 
-    layer_input = tf.random.uniform(shape=[7, 13, 17, 31], minval=-10., maxval=10.)
+    layer_input = tf.random.uniform(shape=[7, 13, 17, 31], minval=-1., maxval=1.)
 
     # forced Conv2D kernel
-    kernel_size = (3, 3)
     kernel_conv2d = tf.random.uniform(shape=[kernel_size[0], kernel_size[1], layer_input.shape[-1], out_channels], minval=-1, maxval=1)
     conv2d_layer_object.add_weight = MagicMock(return_value=kernel_conv2d)
 
@@ -69,13 +70,13 @@ class TestQuadraticConv2D(unittest.TestCase):
     kernel_qconv2d = tf.reshape(kernel_conv2d, shape=[1, 1, kernel_size[0] * kernel_size[1], layer_input.shape[-1], out_channels])
     kernel_qlen = kernel_size[0] * kernel_size[1] * (kernel_size[0] * kernel_size[1] + 1) // 2
     kernel_qconv2d = tf.pad(kernel_qconv2d, tf.constant([[0, 0], [0, 0], [1, kernel_qlen], [0, 0], [0, 0]]))
-    tf.print('qconv2d kernel shape = ', tf.shape(kernel_qconv2d))
     qconv2d_layer_object.add_weight = MagicMock(return_value=kernel_qconv2d)
 
     layer_output = qconv2d_layer_object(layer_input)
     answer = conv2d_layer_object(layer_input)
 
     self.assertGreaterEqual(1e-4, tf.reduce_max(tf.abs(layer_output - answer)), "Should be equal")
+
 
 if __name__ == '__main__':
   unittest.main()
