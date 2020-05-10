@@ -19,7 +19,7 @@ class TestQuadraticConv2D(unittest.TestCase):
 
   def test_bias(self):
     """Test bias"""
-    out_channels = 1
+    out_channels = 3
 
     # define layer
     layer_object = layers.QuadraticConv2D(out_channels=out_channels,
