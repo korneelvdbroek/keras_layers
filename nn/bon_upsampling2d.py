@@ -12,9 +12,10 @@ def bon_upsampling2d(inputs, strides, kernel_shape):
      conv2d(output, padding='VALID') = conv2d_transpose(inputs)
   when one uses a reversed kernel (see tests)
 
-  :param inputs:     4D input tensor (shape=[batch_size, height, width, in_channels])
-  :param strides:    2-tuple with strides
-  :return:           4D input tensor (shape=[batch_size, height * strides[0], width * strides[1], in_channels])
+  :param inputs:       4D input tensor (shape=[batch_size, height, width, in_channels])
+  :param strides:      2-tuple with strides
+  :param kernel_shape: shape of kernel to be used in conv2d (affects padding)
+  :return:             4D input tensor (shape=[batch_size, height * strides[0], width * strides[1], in_channels])
   """
   pad_total = tuple(kernel_shape[i] - 1 for i in range(2))
   padding_magic = [(1 - (pad_total[i] % 2)) * (1 - (strides[i] % 2)) - max(0, strides[i] - pad_total[i]) // 2 + (

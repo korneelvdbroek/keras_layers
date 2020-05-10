@@ -7,6 +7,8 @@ from tensorflow.python.keras import constraints
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 
+import nn
+
 
 class QuadraticConv2DTranspose(tf.keras.layers.Layer):
   def __init__(self,
@@ -37,14 +39,31 @@ class QuadraticConv2DTranspose(tf.keras.layers.Layer):
     self.kernel_constraint = constraints.get(kernel_constraint)
 
   def build(self, input_shape):
-    pass
+    in_channels = input_shape[3]
+
+    flat_kernel_length = nn.get_flat_kernel_shape(in_channels, self.out_channels,
+                                                  self.kernel_size, self.use_linear_and_bias)
+    flat_kernel_shape = [1, 1, flat_kernel_length, in_channels, self.out_channels]
+
+    self.flat_kernel = self.add_weight(
+        name='kernel',
+        shape=flat_kernel_shape,
+        initializer=self.kernel_initializer,
+        regularizer=self.kernel_regularizer,
+        constraint=self.kernel_constraint,
+        trainable=True,
+        dtype=self.dtype)
 
   def call(self, inputs, **kwargs):
-    # bed-of-nails
+    # bed-of-nails up-sampling
+    upsampled = nn.bon_upsampling2d(inputs, self.strides, self.kernel_size)
 
-    # then call quadratic_conv2d --> do we make a function nn.quadratic_conv2d to isolate it?
+    # quadratic_conv2d
+    strides = (1, 1)
+    outputs = nn.quadratic_conv2d(upsampled, self.out_channels, self.kernel_size, strides,
+                                  self.flat_kernel, self.use_linear_and_bias, padding='VALID')
 
-    pass
+    return outputs
 
   def get_config(self):
     config = {

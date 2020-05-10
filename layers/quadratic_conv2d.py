@@ -30,8 +30,6 @@ class QuadraticConv2D(tf.keras.layers.Layer):
     self.out_channels = out_channels
     self.kernel_size = kernel_size
     self.strides = strides
-    if padding.lower() != 'same':
-      raise ValueError("Only padding='SAME' is supported for QuadraticConv2D")
     self.padding = padding
     self.use_linear_and_bias = use_linear_and_bias
     self.kernel_initializer = initializers.get(kernel_initializer)
@@ -54,11 +52,9 @@ class QuadraticConv2D(tf.keras.layers.Layer):
         trainable=True,
         dtype=self.dtype)
 
-    self.paddings, self.out_shape = nn._compute_padding(input_shape, self.out_channels, self.kernel_size, self.strides)
-
   def call(self, inputs, **kwargs):
-    return nn._quadratic_conv2d(inputs, self.kernel_size, self.strides, self.flat_kernel,
-                                self.use_linear_and_bias, self.paddings, self.out_shape)
+    return nn.quadratic_conv2d(inputs, self.out_channels, self.kernel_size, self.strides, self.flat_kernel,
+                               self.use_linear_and_bias, self.padding)
 
   def get_config(self):
     config = {
