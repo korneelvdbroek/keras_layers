@@ -1,2 +1,3 @@
 
 from layers.quadratic_conv2d import QuadraticConv2D
+from layers.quadratic_conv2d_transpose import QuadraticConv2DTranspose

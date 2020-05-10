@@ -78,7 +78,7 @@ class TestQuadraticConv2D(unittest.TestCase):
     self.assertGreaterEqual(1e-4, tf.reduce_max(tf.abs(layer_output - answer)), "Should be equal")
 
   def test_quadratic(self):
-    """Test bias"""
+    """Test quadratic terms"""
     out_channels = 1
 
     # define layer

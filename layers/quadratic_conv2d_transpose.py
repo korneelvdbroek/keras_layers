@@ -1,16 +1,14 @@
 # !/usr/bin/env python
 
-"""Definition of a 2D quadratic convolution keras Layer"""
+"""Definition of the transpose quadratic convolution"""
 
 import tensorflow as tf
 from tensorflow.python.keras import constraints
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 
-import nn
 
-
-class QuadraticConv2D(tf.keras.layers.Layer):
+class QuadraticConv2DTranspose(tf.keras.layers.Layer):
   def __init__(self,
                out_channels,
                kernel_size,
@@ -23,7 +21,7 @@ class QuadraticConv2D(tf.keras.layers.Layer):
                trainable=True,
                name=None,
                **kwargs):
-    super(QuadraticConv2D, self).__init__(
+    super(QuadraticConv2DTranspose, self).__init__(
         trainable=trainable,
         name=name,
         **kwargs)
@@ -31,7 +29,7 @@ class QuadraticConv2D(tf.keras.layers.Layer):
     self.kernel_size = kernel_size
     self.strides = strides
     if padding.lower() != 'same':
-      raise ValueError("Only padding='SAME' is supported for QuadraticConv2D")
+      raise ValueError("Only padding='SAME' is supported for QuadraticConv2DTranspose")
     self.padding = padding
     self.use_linear_and_bias = use_linear_and_bias
     self.kernel_initializer = initializers.get(kernel_initializer)
@@ -39,26 +37,14 @@ class QuadraticConv2D(tf.keras.layers.Layer):
     self.kernel_constraint = constraints.get(kernel_constraint)
 
   def build(self, input_shape):
-    in_channels = input_shape[3]
-
-    flat_kernel_length = nn.get_flat_kernel_shape(in_channels, self.out_channels,
-                                                  self.kernel_size, self.use_linear_and_bias)
-    flat_kernel_shape = [1, 1, flat_kernel_length, in_channels, self.out_channels]
-
-    self.flat_kernel = self.add_weight(
-        name='kernel',
-        shape=flat_kernel_shape,
-        initializer=self.kernel_initializer,
-        regularizer=self.kernel_regularizer,
-        constraint=self.kernel_constraint,
-        trainable=True,
-        dtype=self.dtype)
-
-    self.paddings, self.out_shape = nn._compute_padding(input_shape, self.out_channels, self.kernel_size, self.strides)
+    pass
 
   def call(self, inputs, **kwargs):
-    return nn._quadratic_conv2d(inputs, self.kernel_size, self.strides, self.flat_kernel,
-                                self.use_linear_and_bias, self.paddings, self.out_shape)
+    # bed-of-nails
+
+    # then call quadratic_conv2d --> do we make a function nn.quadratic_conv2d to isolate it?
+
+    pass
 
   def get_config(self):
     config = {
@@ -71,5 +57,5 @@ class QuadraticConv2D(tf.keras.layers.Layer):
         'kernel_regularizer': regularizers.serialize(self.kernel_regularizer),
         'kernel_constraint': constraints.serialize(self.kernel_constraint)
     }
-    base_config = super(QuadraticConv2D, self).get_config()
+    base_config = super(QuadraticConv2DTranspose, self).get_config()
     return dict(list(base_config.items()) + list(config.items()))
